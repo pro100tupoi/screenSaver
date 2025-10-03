@@ -39,7 +39,7 @@ namespace screenSaver
 
         private void CreateSnowflakes()
         {
-            snowflakes = new List<Snowflake>();
+            snowflakes = [];
             var rand = new Random();
 
             var count = rand.Next(500, 801);
@@ -52,7 +52,7 @@ namespace screenSaver
                 // Скорость
                 var speed = (float)(0.15 + rand.NextDouble() * 7.7);
 
-                speed *= (0.95f + 0.1f * scale);
+                speed *= 0.95f + 0.1f * scale;
 
                 var idx = rand.Next(snowflakeImages.Length);
 
@@ -89,7 +89,7 @@ namespace screenSaver
             foreach (var flake in snowflakes)
             {
                 Image img = snowflakeImages[flake.ImageIndex];
-                float size = img.Width * flake.Scale;
+                var size = img.Width * flake.Scale;
                 var w = Math.Max(1, (int)size);
                 var h = Math.Max(1, (int)size);
                 var x = (int)(flake.X - w / 2f);

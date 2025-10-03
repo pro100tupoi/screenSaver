@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace screenSaver.Classes
 {
     /// <summary>
-    /// Представляет одну снежинку в анимации: хранит позицию, размер, скорость и тип изображения.
+    /// Снежинка
     /// </summary>
     public class Snowflake
     {
