@@ -40,7 +40,6 @@
             BackgroundImage = Properties.Resources.background;
             BackgroundImageLayout = ImageLayout.Stretch;
             ClientSize = new Size(893, 511);
-            DoubleBuffered = true;
             FormBorderStyle = FormBorderStyle.None;
             Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "MainForm";
@@ -48,8 +47,6 @@
             WindowState = FormWindowState.Maximized;
             Load += MainForm_Load;
             Click += MainForm_Click;
-            Paint += MainForm_Paint;
-            KeyDown += MainForm_KeyDown;
             ResumeLayout(false);
         }
 

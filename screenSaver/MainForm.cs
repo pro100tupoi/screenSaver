@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
 using System.Windows.Forms;
 using screenSaver.Classes;
 
@@ -12,6 +11,11 @@ namespace screenSaver
     {
         private List<Snowflake> snowflakes;
         private Image[] snowflakeImages;
+        private readonly Random rand = new Random();
+
+        // Буфер для двойной буферизации
+        private Bitmap backBuffer;
+        private Graphics bufferGraphics;
 
         public MainForm()
         {
@@ -33,43 +37,40 @@ namespace screenSaver
 
         private void MainForm_Load(object sender, EventArgs e)
         {
+            // Создаём буфер при загрузке
+            backBuffer = new Bitmap(ClientSize.Width, ClientSize.Height);
+            bufferGraphics = Graphics.FromImage(backBuffer);
+            bufferGraphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+
             CreateSnowflakes();
             timer1.Start();
         }
 
         private void CreateSnowflakes()
         {
-            snowflakes = [];
-            var rand = new Random();
-
+            snowflakes = new List<Snowflake>();
             var count = rand.Next(500, 801);
 
-            for (int i = 0; i < count; i++)
+            for (var i = 0; i < count; i++)
             {
-                // от 1% до 2% размера оригинала
                 var scale = (float)(0.01 + rand.NextDouble() * 0.02);
-
-                // Скорость
                 var speed = (float)(0.15 + rand.NextDouble() * 7.7);
-
-                speed *= 0.95f + 0.1f * scale;
-
-                var idx = rand.Next(snowflakeImages.Length);
+                speed *= (0.95f + 0.1f * scale);
 
                 snowflakes.Add(new Snowflake
                 {
                     X = (float)rand.NextDouble() * ClientSize.Width,
-                    Y = (float)rand.NextDouble() * (-ClientSize.Height * 2), // распределяем выше
+                    Y = (float)rand.NextDouble() * (-ClientSize.Height * 2),
                     Scale = scale,
                     Speed = speed,
-                    ImageIndex = idx
+                    ImageIndex = rand.Next(snowflakeImages.Length)
                 });
             }
         }
 
         private void Timer1_Tick(object sender, EventArgs e)
         {
-            var rand = new Random();
+            // Обновляем позиции
             foreach (var flake in snowflakes)
             {
                 flake.Y += flake.Speed;
@@ -80,11 +81,13 @@ namespace screenSaver
                     flake.X = (float)rand.NextDouble() * ClientSize.Width;
                 }
             }
-            this.Invalidate();
-        }
 
-        private void MainForm_Paint(object sender, PaintEventArgs e)
-        {
+            // Если у вас фоновое изображение (BackgroundImage), рисуем его
+            if (BackgroundImage != null)
+            {
+                bufferGraphics.DrawImage(BackgroundImage, Point.Empty);
+            }
+
             // Рисуем снежинки
             foreach (var flake in snowflakes)
             {
@@ -95,11 +98,31 @@ namespace screenSaver
                 var x = (int)(flake.X - w / 2f);
                 var y = (int)(flake.Y - h / 2f);
 
-                e.Graphics.DrawImage(img, new Rectangle(x, y, w, h));
+                bufferGraphics.DrawImage(img, new Rectangle(x, y, w, h));
+            }
+
+            // Копируем готовый кадр на экран
+            using (var screenGraphics = CreateGraphics())
+            {
+                screenGraphics.DrawImage(backBuffer, Point.Empty);
             }
         }
 
-        private void MainForm_KeyDown(object sender, KeyEventArgs e) => Application.Exit();
         private void MainForm_Click(object sender, EventArgs e) => Application.Exit();
+        private void MainForm_KeyDown(object sender, KeyEventArgs e) => Application.Exit();
+
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+            if (ClientSize.Width > 0 && ClientSize.Height > 0)
+            {
+                backBuffer?.Dispose();
+                bufferGraphics?.Dispose();
+
+                backBuffer = new Bitmap(ClientSize.Width, ClientSize.Height);
+                bufferGraphics = Graphics.FromImage(backBuffer);
+                bufferGraphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            }
+        }
     }
 }
